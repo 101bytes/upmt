@@ -1,0 +1,16 @@
+version: '3.4'
+services:
+   system_backend:
+    image: dart-debian:bookworm
+    container_name: dart-debian_bookworm-backend
+    build:
+      context: .
+      dockerfile: ./dockerfile
+    restart: always
+    volumes:
+      - ./scripts:/scripts
+    networks:
+      - debian_backend_network
+
+networks:
+  debian_backend_network:

@@ -1,0 +1,26 @@
+# FROM debian:stable-slim
+FROM debian:bookworm
+LABEL maintainer="arijit-bhowmick@outlook.com"
+MAINTAINER Arijit Bhowmick "arijit-bhowmick@outlook.com"
+ENV REFRESHED_AT 2024-03-13
+
+ENV TZ=Asia/Kolkata \
+    LANG='en_US.UTF-8' \
+    LANGUAGE='en_US:en' \
+    LC_ALL='en_US.UTF-8' \
+    DEBIAN_FRONTEND=noninteractive
+
+# Install required packages
+RUN apt-get update && apt-get install -y \
+            curl \
+            wget \
+            ca-certificates
+
+                    
+## Set Keyboard type to US
+RUN echo "keyboard-configuration keyboard-configuration/layout select us" | debconf-set-selections
+
+COPY entrypoint.sh /
+
+# Start entrypoint in the foreground
+ENTRYPOINT "/entrypoint.sh"

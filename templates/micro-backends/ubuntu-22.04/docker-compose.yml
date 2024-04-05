@@ -1,0 +1,16 @@
+version: '3.4'
+services:
+  system_backend:
+    image: dart-ubuntu:22.04
+    container_name: dart-ubuntu_22.04-backend
+    build:
+      context: .
+      dockerfile: ./dockerfile
+    restart: always
+    volumes:
+      - ./scripts:/scripts
+    networks:
+      - ubuntu_backend_network
+
+networks:
+  ubuntu_backend_network:

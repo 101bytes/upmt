@@ -1,0 +1,16 @@
+version: '3.4'
+services:
+   system_backend:
+    image: dart-archlinux:latest
+    container_name: dart-archlinux_latest-backend
+    build:
+      context: .
+      dockerfile: ./dockerfile
+    restart: always
+    volumes:
+      - ./scripts:/scripts
+    networks:
+      - archlinux_backend_network
+
+networks:
+  archlinux_backend_network:

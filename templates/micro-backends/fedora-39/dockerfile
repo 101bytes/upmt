@@ -1,0 +1,15 @@
+FROM fedora:39
+LABEL maintainer="arijit-bhowmick@outlook.com"
+MAINTAINER Arijit Bhowmick "arijit-bhowmick@outlook.com"
+ENV REFRESHED_AT 2024-03-13
+
+ENV TZ=Asia/Kolkata \
+    LANG='en_US.UTF-8' \
+    LANGUAGE='en_US:en' \
+    LC_ALL='en_US.UTF-8' \
+    DEBIAN_FRONTEND=noninteractive
+
+COPY entrypoint.sh /
+
+# Start entrypoint in the foreground
+ENTRYPOINT "/entrypoint.sh"

@@ -1,0 +1,304 @@
+#!/bin/bash
+
+micro_backends_dir="/opt/micro-backends"
+
+# Function to pull Docker image and create container
+pull_and_create_container() {
+    # ./upm.sh {install|remove} backend {backend} {version}
+    local micro_backend_dir="${micro_backends_dir}/$3-$4/"
+
+    # Check if the directory exists
+    if [ ! -d "$micro_backend_dir" ]; then
+        echo "Backend $3 $4 not available"
+        return 1  # Return non-zero to indicate failure
+    fi
+
+    # Change directory and start Docker container
+    cd "$micro_backend_dir" && \
+    docker compose up -d
+}
+
+# Function to remove container and image
+remove_micro_backend() {
+    # ./upm.sh {install|remove} backend {backend} {version}
+    local micro_backend_dir="${micro_backends_dir}/$3-$4/"
+
+    # Check if the directory exists
+    if [ ! -d "$micro_backend_dir" ]; then
+        echo "Backend $3 $4 not available"
+        return 1  # Return non-zero to indicate failure
+    fi
+
+
+    cd "${micro_backends_dir}/$3-$4/" && \
+    docker compose down --rmi all
+}
+
+# Function to restart container and image
+restart_micro_backend() {
+    # ./upm.sh {install|remove} backend {backend} {version}
+    local micro_backend_dir="${micro_backends_dir}/$3-$4/"
+
+    # Check if the directory exists
+    if [ ! -d "$micro_backend_dir" ]; then
+        echo "Backend $3 $4 not available"
+        return 1  # Return non-zero to indicate failure
+    fi
+
+
+    cd "${micro_backends_dir}/$3-$4/" && \
+    docker compose stop && \
+    docker compose start
+}
+
+# Function to stop container and image
+stop_micro_backend() {
+    # ./upm.sh {install|remove} backend {backend} {version}
+    local micro_backend_dir="${micro_backends_dir}/$3-$4/"
+
+    # Check if the directory exists
+    if [ ! -d "$micro_backend_dir" ]; then
+        echo "Backend $3 $4 not available"
+        return 1  # Return non-zero to indicate failure
+    fi
+
+
+    cd "${micro_backends_dir}/$3-$4/" && \
+    docker compose stop
+}
+
+# Function to install packages in a container
+install_packages_in_container() {
+    # Syntax: <script> pkg install <pkg_name> <backend> <backend_version>
+    # Add your logic to install packages in the specified backend container
+    local micro_backend_dir="${micro_backends_dir}/$4-$5/"
+
+    # Check if the directory exists
+    if [ ! -d "$micro_backend_dir" ]; then
+        echo "Backend $4 $5 not available"
+        return 1  # Return non-zero to indicate failure
+    fi
+
+    # Change directory and start Docker container
+    cd "$micro_backend_dir" && \
+    docker compose exec system_backend /scripts/pkg_install.sh "$3"
+}
+
+# Function to remove packages from a container
+remove_packages_from_container() {
+    # Syntax: <script> pkg remove <pkg_name> <backend> <backend_version>
+    # Add your logic to remove packages from the specified backend container
+    local micro_backend_dir="${micro_backends_dir}/$4-$5/"
+
+    # Check if the directory exists
+    if [ ! -d "$micro_backend_dir" ]; then
+        echo "Backend $4 $5 not available"
+        return 1  # Return non-zero to indicate failure
+    fi
+
+    # Change directory and start Docker container
+    cd "$micro_backend_dir" && \
+    docker compose exec system_backend /scripts/pkg_remove.sh "\"$3\""
+}
+
+# Function to remove packages from a container
+update_packages_in_container() {
+    # Syntax: <script> update <backend> <backend_version>
+    local micro_backend_dir="${micro_backends_dir}/$2-$3/"
+
+    # Check if the directory exists
+    if [ ! -d "$micro_backend_dir" ]; then
+        echo "Backend $2 $3 not available"
+        return 1  # Return non-zero to indicate failure
+    fi
+
+    # Change directory and start Docker container
+    cd "$micro_backend_dir" && \
+    docker compose exec system_backend /scripts/pkg_update.sh
+}
+
+get_shell_in_container() {
+    # Syntax: <script> shell <backend> <backend_version>
+    local micro_backend_dir="${micro_backends_dir}/$2-$3/"
+
+    # Check if the directory exists
+    if [ ! -d "$micro_backend_dir" ]; then
+        echo "Backend $2 $3 not available"
+        return 1  # Return non-zero to indicate failure
+    fi
+
+    # Change directory and start Docker container
+    cd "$micro_backend_dir" && \
+    docker compose exec -it system_backend /scripts/get_shell.sh
+}
+
+
+list_installed_micro_backends() {
+    # Syntax: <script> list installed
+    # Add your logic to install packages in the specified backend container
+    # docker container ls -a | grep -E "^dart-.*"
+    docker container ls -a | rev | cut -d ' ' -f 1 | rev
+}
+
+list_running_micro_backends() {
+    # Syntax: <script> list running
+    docker ps --format "{{.Image}}" | grep '^dart-.*'
+}
+
+list_available_micro_backends() {
+    # Syntax: <script> list available
+    # Add your logic to install packages in the specified backend container
+    ls "${micro_backends_dir}" | sed 's/\(.*\)-\(.*\)/dart=> \1 : \2/' | tr '-' ':'
+}
+
+exec_cmd_in_micro_backends() {
+    # Syntax: <script> exec "<command>" <backend> <backend_version>
+    # Add your logic to install packages in the specified backend container
+    local micro_backend_dir="${micro_backends_dir}/$3-$4/"
+
+    # Check if the directory exists
+    if [ ! -d "$micro_backend_dir" ]; then
+        echo "Backend $3 $4 not available"
+        return 1  # Return non-zero to indicate failure
+    fi
+
+    # Change directory and start Docker container
+    cd "$micro_backend_dir" && \
+    docker compose exec system_backend /scripts/exec_cmd.sh "$2"
+}
+
+# Main script
+case "$1" in
+    backend)
+        case "$2" in
+            install)
+                pull_and_create_container "$@"
+                ;;
+            remove)
+                remove_micro_backend "$@"
+                ;;
+            restart)
+                restart_micro_backend "$@"
+                ;;
+            stop)
+                stop_micro_backend "$@"
+                ;;
+            *)
+                echo "Invalid image name"
+                ;;
+        esac
+        ;;
+    pkg)
+        case "$2" in
+            install)
+                install_packages_in_container "$@"
+                ;;
+            remove)
+                remove_packages_from_container "$@"
+                ;;
+            *)
+                echo "Invalid image name"
+                ;;
+        esac
+        ;;
+    update)
+        update_packages_in_container "$@"
+        ;;
+    list)
+        case "$2" in
+            installed)
+                list_installed_micro_backends "$@"
+                ;;
+            available)
+                list_available_micro_backends "$@"
+                ;;
+            running)
+                list_running_micro_backends "$@"
+                ;;
+            *)
+                echo "No Backends available"
+                ;;
+        esac
+        ;;
+    exec)
+        exec_cmd_in_micro_backends "$@"
+        ;;
+    shell)
+        get_shell_in_container "$@"
+        ;;
+    apt)
+        case "$2" in
+            install)
+                install_packages_in_container "$1" "install" "$3" "ubuntu" "22.04"
+                ;;
+            remove)
+                remove_packages_from_container "$1" "remove" "$3" "ubuntu" "22.04"
+                ;;
+            exec)
+                exec_cmd_in_micro_backends "$2" "$3" "ubuntu" "22.04"
+                ;;
+            shell)
+                get_shell_in_container "$1" "ubuntu" "22.04"
+                ;;
+            *)
+                echo "No Backends available"
+                ;;
+        esac
+        ;;
+    dnf)
+        case "$2" in
+            install)
+                install_packages_in_container "$1" "install" "$3" "fedora" "39"
+                ;;
+            remove)
+                remove_packages_from_container "$1" "remove" "$3" "fedora" "39"
+                ;;
+            exec)
+                exec_cmd_in_micro_backends "$2" "$3" "fedora" "39"
+                ;;
+            shell)
+                get_shell_in_container "$1" "fedora" "39"
+                ;;
+            *)
+                echo "No Backends available"
+                ;;
+        esac
+        ;;
+     pacman)
+        case "$2" in
+            install)
+                install_packages_in_container "$1" "install" "$3" "archlinux" "latest"
+                ;;
+            remove)
+                remove_packages_from_container "$1" "remove" "$3" "archlinux" "latest"
+                ;;
+            exec)
+                exec_cmd_in_micro_backends "$2" "$3" "archlinux" "latest"
+                ;;
+            shell)
+                get_shell_in_container "$1" "archlinux" "latest"
+                ;;
+            *)
+                echo "No Backends available"
+                ;;
+        esac
+        ;;
+    *)
+        echo "Dart OS - Universal Package Manager"
+        echo "Usage: $0 backend {install|remove|stop|restart} {backend} {version}"
+        echo "    $0 pkg {install|remove} <pkg_name> <backend> <backend_version>"
+        echo "    $0 {apt|dnf|pacman} {install|remove} <pkg_name>"
+        echo "    $0 {apt|dnf|pacman} shell"
+        echo "    $0 {apt|dnf|pacman} exec <command>"
+        echo "    $0 update <backend> <backend_version>"
+        echo "    $0 exec \"<command>\" <backend> <backend_version>"
+        echo "    $0 shell <backend> <backend_version>"
+        echo "    $0 list {installed|available|running}"
+        echo "Available Backends and versions:"
+        echo "     ubuntu 22.04"
+        echo "     debian bookworm"
+        echo "     fedora 39"
+        echo "     archlinux latest"
+        echo "     kalilinux-rolling latest"
+        ;;
+esac

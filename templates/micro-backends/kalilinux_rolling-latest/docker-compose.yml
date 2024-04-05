@@ -1,0 +1,16 @@
+version: '3.4'
+services:
+   system_backend:
+    image: dart-kalilinux_rolling:latest
+    container_name: dart-kalilinux_rolling_latest-backend
+    build:
+      context: .
+      dockerfile: ./dockerfile
+    restart: always
+    volumes:
+      - ./scripts:/scripts
+    networks:
+      - kalilinux_backend_network
+
+networks:
+  kalilinux_backend_network:

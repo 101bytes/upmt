@@ -1,0 +1,16 @@
+version: '3.4'
+services:
+   system_backend:
+    image: dart-fedora:39
+    container_name: dart-fedora_39-backend
+    build:
+      context: .
+      dockerfile: ./dockerfile
+    restart: always
+    volumes:
+      - ./scripts:/scripts
+    networks:
+      - fedora_backend_network
+
+networks:
+  fedora_backend_network:
